@@ -17,7 +17,7 @@ pub trait Reader {
     /// Error raised by the reader
     type Error: Into<Box<dyn std::error::Error>>;
 
-    /// An iterator type that can be used to iterator over the [`Self::Item`] elements from the reader
+    /// An iterator type that can be used to iterate over the [`Self::Item`] elements from the reader
     /// The iterator will yield a [`Result`] over the elements
     type Iterator: Iterator<Item = Result<Self::Item, Self::Error>>;
 
