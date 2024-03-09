@@ -97,7 +97,16 @@ impl ClientEntry {
                 }
             }
 
-            TransactionOperation::Chargeback => {}
+            TransactionOperation::Chargeback => {
+                if let Some(disputed_tx) = self.transactions.get(&id) {
+                    if disputed_tx.disputed {
+                        self.held -= disputed_tx.amount;
+                        self.total -= disputed_tx.amount;
+
+                        self.locked = true;
+                    }
+                }
+            }
         }
 
         self.ensure_invariants();
