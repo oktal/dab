@@ -3,14 +3,13 @@ use serde::{Deserialize, Serialize};
 pub mod engine;
 
 /// Represents a type of transaction handled by the payment engine
-#[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Serialize, Deserialize)]
-#[serde(rename_all = "lowercase")]
-pub enum TransactionType {
-    /// A depositor is a credit to the client's asset account
-    Deposit,
+#[derive(Debug, Clone, Copy, Serialize, Deserialize)]
+pub enum TransactionOperation {
+    /// A deposit is a credit to the client's asset account
+    Deposit(f64),
 
     /// A withdrawl is a debit to the client's asset account
-    Withdrawal,
+    Withdrawal(f64),
 
     /// A dispute represents a client's claim that a transaction was erroneous and should be reversed
     Dispute,
@@ -47,9 +46,6 @@ impl From<u32> for TransactionId {
 /// Represents a transaction that occured for a particular client
 #[derive(Debug, Copy, Clone, Serialize, Deserialize)]
 pub struct Transaction {
-    /// The type of transaction
-    pub transaction_type: TransactionType,
-
     /// Client identifier
     pub client: ClientId,
 
@@ -58,11 +54,8 @@ pub struct Transaction {
     /// or represent a reference to an other transaction for other transaction types
     pub id: TransactionId,
 
-    /// Optional amount of the transaction
-    /// Deposit and Withdrawal transactions should have an associated amount
-    /// Other transactions will refer to previously processed transactions through
-    /// their [`TransactionId`]
-    pub amount: Option<f64>,
+    /// The operation conveyed by the transaction
+    pub operation: TransactionOperation,
 }
 
 /// Represents an account for a particular client

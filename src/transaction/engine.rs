@@ -1,11 +1,13 @@
 use std::collections::HashMap;
 
-use super::{Account, ClientId, Transaction, TransactionId, TransactionType};
+use super::{Account, ClientId, Transaction, TransactionId, TransactionOperation};
 
 #[derive(Debug)]
 struct TransactionEntry {
+    /// Amount of the transaction
     amount: f64,
 
+    /// Flag indicated whether a transaction has been disputed or not
     disputed: bool,
 }
 
@@ -57,22 +59,16 @@ impl ClientEntry {
     fn apply(&mut self, transaction: Transaction) {
         let id = transaction.id;
 
-        match transaction.transaction_type {
-            TransactionType::Deposit => {
+        match transaction.operation {
+            TransactionOperation::Deposit(amount) => {
                 if let Some(this) = self.acquire_mut(id) {
-                    let Some(amount) = transaction.amount else {
-                        return;
-                    };
                     this.available += amount;
                     this.total += amount;
                 }
             }
 
-            TransactionType::Withdrawal => {
+            TransactionOperation::Withdrawal(amount) => {
                 if let Some(this) = self.acquire_mut(id) {
-                    let Some(amount) = transaction.amount else {
-                        return;
-                    };
                     let available = this.available - amount;
                     if available >= 0.0 {
                         this.available = available;
@@ -81,7 +77,7 @@ impl ClientEntry {
                 }
             }
 
-            TransactionType::Dispute => {
+            TransactionOperation::Dispute => {
                 if let Some(disputed_tx) = self.transactions.get_mut(&id) {
                     if !disputed_tx.disputed {
                         self.available -= disputed_tx.amount;
@@ -91,7 +87,7 @@ impl ClientEntry {
                 }
             }
 
-            TransactionType::Resolve => {
+            TransactionOperation::Resolve => {
                 if let Some(disputed_tx) = self.transactions.get_mut(&id) {
                     if disputed_tx.disputed {
                         self.available += disputed_tx.amount;
@@ -101,7 +97,7 @@ impl ClientEntry {
                 }
             }
 
-            TransactionType::Cashback => {}
+            TransactionOperation::Chargeback => {}
         }
 
         self.ensure_invariants();

@@ -1,10 +1,21 @@
 use std::{fs::File, path::Path};
 
+use anyhow::anyhow;
 use serde::{Deserialize, Serialize};
 
-use crate::transaction::{Transaction, TransactionType};
+use crate::transaction::{Transaction, TransactionOperation};
 
 use super::Reader;
+
+#[derive(Debug, Clone, Copy, Eq, PartialEq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+enum TransactionType {
+    Deposit,
+    Withdrawal,
+    Dispute,
+    Resolve,
+    Chargeback,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(super) struct CsvTransactionRecord {
@@ -14,14 +25,31 @@ pub(super) struct CsvTransactionRecord {
     amount: Option<f64>,
 }
 
-impl Into<Transaction> for CsvTransactionRecord {
-    fn into(self) -> Transaction {
-        Transaction {
-            transaction_type: self.r#type,
+impl TryInto<Transaction> for CsvTransactionRecord {
+    type Error = anyhow::Error;
+
+    fn try_into(self) -> Result<Transaction, Self::Error> {
+        let operation = match self.r#type {
+            TransactionType::Deposit => TransactionOperation::Deposit(
+                self.amount
+                    .ok_or(anyhow!("deposit transaction should have an amount"))?,
+            ),
+
+            TransactionType::Withdrawal => TransactionOperation::Withdrawal(
+                self.amount
+                    .ok_or(anyhow!("deposit transaction should have an amount"))?,
+            ),
+
+            TransactionType::Dispute => TransactionOperation::Dispute,
+            TransactionType::Resolve => TransactionOperation::Resolve,
+            TransactionType::Chargeback => TransactionOperation::Chargeback,
+        };
+
+        Ok(Transaction {
             client: self.client.into(),
             id: self.tx.into(),
-            amount: self.amount,
-        }
+            operation,
+        })
     }
 }
 
@@ -43,6 +71,7 @@ impl CsvReader {
     }
 }
 impl Reader for CsvReader {
+    type IntoError = anyhow::Error;
     type Item = CsvTransactionRecord;
     type Error = csv::Error;
 
