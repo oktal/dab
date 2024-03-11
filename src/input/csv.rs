@@ -37,7 +37,7 @@ impl TryInto<Transaction> for CsvTransactionRecord {
 
             TransactionType::Withdrawal => TransactionOperation::Withdrawal(
                 self.amount
-                    .ok_or(anyhow!("deposit transaction should have an amount"))?,
+                    .ok_or(anyhow!("withdrawal transaction should have an amount"))?,
             ),
 
             TransactionType::Dispute => TransactionOperation::Dispute,

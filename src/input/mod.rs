@@ -8,7 +8,7 @@ mod csv;
 
 /// An abstraction to read transaction records
 pub trait Reader {
-    /// Error raise when attempting to convert a record yielded by the reader to a [`Transaction`]
+    /// Error raised when attempting to convert a record yielded by the reader to a [`Transaction`]
     type IntoError: Into<Box<dyn std::error::Error>>;
 
     /// Type that the reader will yield that must be convertible to a [`Transaction`]
